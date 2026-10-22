@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "create:andesite_ladder", "required": false },
+    { "id": "create:brass_ladder", "required": false },
+    { "id": "create:copper_ladder", "required": false }
+  ]
+}
