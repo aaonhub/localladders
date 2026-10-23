@@ -17,13 +17,13 @@ def int_list(vals):
 
 air = named(TAG_STRING, "Name", s("minecraft:air")) + bytes([TAG_END])
 root = (
-    named(TAG_INT, "DataVersion", struct.pack(">i", 3465))
+    named(TAG_INT, "DataVersion", struct.pack(">i", 3955))
     + named(TAG_LIST, "size", int_list([9, 16, 9]))
     + named(TAG_LIST, "palette", bytes([TAG_COMPOUND]) + struct.pack(">i", 1) + air)
     + named(TAG_LIST, "blocks", bytes([TAG_END]) + struct.pack(">i", 0))
     + named(TAG_LIST, "entities", bytes([TAG_END]) + struct.pack(">i", 0))
     + bytes([TAG_END])
 )
-out = Path(__file__).resolve().parent.parent / "src/main/resources/data/localladders/structures/arena.nbt"
+out = Path(__file__).resolve().parent.parent / "src/main/resources/data/localladders/structure/arena.nbt"
 out.write_bytes(gzip.compress(named(TAG_COMPOUND, "", root), mtime=0))
 print(out)

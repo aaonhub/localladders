@@ -8,9 +8,9 @@ import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraftforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.GameTestHolder;
 
-/** {@link LadderScenarios} as GameTests (./gradlew runGameTestServer). Forge only registers these in a dev workspace. */
+/** {@link LadderScenarios} as GameTests (./gradlew runGameTestServer). NeoForge only registers these in a dev workspace. */
 @GameTestHolder(LocalLadders.MODID)
 public class LadderGameTests {
     @GameTestGenerator

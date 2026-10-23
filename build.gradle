@@ -1,7 +1,7 @@
 plugins {
-    id 'eclipse'
+    id 'java-library'
     id 'idea'
-    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'net.neoforged.moddev' version '2.0.148'
 }
 
 version = mod_version
@@ -11,50 +11,57 @@ base {
     archivesName = "${mod_id}-${minecraft_version}"
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-minecraft {
-    mappings channel: mapping_channel, version: mapping_version
-    copyIdeResources = true
+neoForge {
+    enable {
+        version = project.neo_version
+        // Official (Mojang) names. No decompile + recompile of Minecraft: Vineflower wants a 4 GB heap, more than the
+        // memory-capped build container has (compiling against the renamed binary jar works the same).
+        disableRecompilation = true
+    }
 
     runs {
         configureEach {
-            workingDirectory project.file('run')
-            property 'forge.logging.console.level', 'info'
-            mods {
-                "${mod_id}" {
-                    source sourceSets.main
-                }
-            }
+            gameDirectory = project.file('run')
+            logLevel = org.slf4j.event.Level.INFO
+        }
+
+        client {
+            client()
         }
 
         server {
-            property 'forge.enabledGameTestNamespaces', mod_id
-            args '--nogui'
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
         // Runs every gametest in src/main/java/.../LadderGameTests.java, then exits (non-zero if one fails).
         gameTestServer {
-            workingDirectory project.file('run-gametest')
-            property 'forge.enabledGameTestNamespaces', mod_id
+            type = 'gameTestServer'
+            gameDirectory = project.file('run-gametest')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
     }
-}
 
-dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
 }
 
 tasks.named('processResources', ProcessResources).configure {
     var replaceProperties = [
             minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
-            forge_version: forge_version, forge_version_range: forge_version_range,
+            neo_version: neo_version, neo_version_range: neo_version_range,
             loader_version_range: loader_version_range,
             mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
             mod_authors: mod_authors, mod_description: mod_description,
     ]
     inputs.properties replaceProperties
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+    filesMatching(['META-INF/neoforge.mods.toml', 'pack.mcmeta']) {
         expand replaceProperties + [project: project]
     }
 }
@@ -67,11 +74,10 @@ tasks.named('jar', Jar).configure {
                 'Specification-Vendor'    : mod_authors,
                 'Specification-Version'   : '1',
                 'Implementation-Title'    : project.name,
-                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Version'  : project.version,
                 'Implementation-Vendor'   : mod_authors,
         ])
     }
-    finalizedBy 'reobfJar'
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -80,5 +86,6 @@ tasks.withType(JavaCompile).configureEach {
 
 // Every gametest run starts from a fresh world (item entities left over from the last run would be counted as drops).
 tasks.matching { it.name == 'runGameTestServer' }.configureEach {
-    doFirst { delete file('run-gametest/world') }
+    def world = file('run-gametest/world')
+    doFirst { delete world }
 }

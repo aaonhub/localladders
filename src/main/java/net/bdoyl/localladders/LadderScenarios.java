@@ -19,10 +19,10 @@ import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.level.BlockEvent;
 
 /**
  * A stone wall with a column of ladders on it, a fake player in front holding ladders who right-clicks one through the
@@ -62,7 +62,7 @@ final class LadderScenarios {
     /** Players whose block placements a pretend claim mod cancels (see aClaimCancellingThePlaceEventWins). */
     private static final Set<UUID> CLAIMED = new HashSet<>();
     static {
-        MinecraftForge.EVENT_BUS.addListener((BlockEvent.EntityPlaceEvent e) -> {
+        NeoForge.EVENT_BUS.addListener((BlockEvent.EntityPlaceEvent e) -> {
             if (e.getEntity() != null && CLAIMED.contains(e.getEntity().getUUID())) e.setCanceled(true);
         });
     }

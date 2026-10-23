@@ -18,10 +18,10 @@ import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.util.TriState;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  *   <li>looking up or down more than {@link #PITCH_DEGREES}: up or down;</li>
  *   <li>looking roughly straight at it: the upper half of the ladder you clicked means up, the lower half down.</li>
  * </ul>
- * The ladder is placed exactly like a normal right-click on that spot (the held ladder item's own placement, Forge's
+ * The ladder is placed exactly like a normal right-click on that spot (the held ladder item's own placement, NeoForge's
  * place event for claim mods, spawn protection, adventure mode, one item used outside creative), so it needs whatever
  * a normal ladder there needs: a solid wall behind it (or a ladder above it to hang from, where a mod like Quark allows
  * that) and nobody standing in the way. Clicking a ladder's side face keeps the vanilla behaviour.
@@ -46,7 +46,7 @@ public final class LadderExtender {
     static final int MAX_COLUMN = 64;
 
     /** Ladders whose own mod already does something on right-click with a ladder (Create's metal ladders). */
-    static final TagKey<Block> NOT_EXTENDABLE = TagKey.create(Registries.BLOCK, new ResourceLocation(LocalLadders.MODID, "not_extendable"));
+    static final TagKey<Block> NOT_EXTENDABLE = TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(LocalLadders.MODID, "not_extendable"));
 
     private LadderExtender() {}
 
@@ -55,7 +55,7 @@ public final class LadderExtender {
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         Player player = event.getEntity();
         ItemStack stack = event.getItemStack();
-        if (player.isSpectator() || !isLadder(stack) || event.getUseItem() == Event.Result.DENY) return;
+        if (player.isSpectator() || !isLadder(stack) || event.getUseItem() == TriState.FALSE) return;
         Level level = event.getLevel();
         BlockHitResult hit = event.getHitVec();
         BlockState clicked = level.getBlockState(event.getPos());
@@ -66,11 +66,20 @@ public final class LadderExtender {
 
         Direction way = direction(player, hit, event.getPos(), facing);
         BlockPos target = columnEnd(level, event.getPos(), facing, way);
-        boolean placed = target != null && player.canReach(target, EXTRA_REACH)
+        boolean placed = target != null && canReach(player, target)
                 && (level.isClientSide ? looksPlaceable(level, target, facing, stack) : place((ServerPlayer) player, event.getHand(), stack, target, facing));
         // Either way this click was an extend attempt, so nothing else (vanilla, Quark) acts on it.
         event.setCanceled(true);
         event.setCancellationResult(placed ? InteractionResult.sidedSuccess(level.isClientSide) : InteractionResult.FAIL);
+    }
+
+    /**
+     * Eyes to the centre of {@code target} within the player's block reach + {@link #EXTRA_REACH} (Forge 1.20.1's
+     * {@code canReach}; vanilla's {@code canInteractWithBlock} measures to the nearest point of the block instead).
+     */
+    static boolean canReach(Player player, BlockPos target) {
+        double reach = player.blockInteractionRange() + EXTRA_REACH;
+        return player.getEyePosition().distanceToSqr(Vec3.atCenterOf(target)) < reach * reach;
     }
 
     static boolean isLadder(ItemStack stack) {
@@ -108,7 +117,7 @@ public final class LadderExtender {
     }
 
     /**
-     * Uses the held ladder on {@code target} as a normal right-click there would: {@code ItemStack.useOn}, i.e. Forge's
+     * Uses the held ladder on {@code target} as a normal right-click there would: {@code ItemStack.useOn}, i.e. NeoForge's
      * placement hook (block place event, adventure mode), the ladder's own getStateForPlacement and canSurvive, sound,
      * stats, and one item used unless in creative. For the duration of the call the player looks level at the wall
      * behind the spot, so the ladder's placement picks the column's facing even when the spot has other walls too.

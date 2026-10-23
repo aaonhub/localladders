@@ -21,16 +21,15 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.event.ModelEvent;
-import net.minecraftforge.client.model.BakedModelWrapper;
-import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.ModelEvent;
+import net.neoforged.neoforge.client.model.BakedModelWrapper;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -59,11 +58,11 @@ public final class Ladder3DModels {
     }
 
     private static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
-        Map<ResourceLocation, BakedModel> models = event.getModels();
+        Map<ModelResourceLocation, BakedModel> models = event.getModels();
         Map<TextureAtlasSprite, LadderShape> shapes = new IdentityHashMap<>();
         int swapped = 0, odd = 0;
         List<String> kept = new ArrayList<>();
-        for (Block block : ForgeRegistries.BLOCKS) {
+        for (Block block : BuiltInRegistries.BLOCK) {
             if (!(block instanceof LadderBlock)) continue;
             for (BlockState state : block.getStateDefinition().getPossibleStates()) {
                 if (!state.hasProperty(LadderBlock.FACING)) continue;
@@ -71,7 +70,7 @@ public final class Ladder3DModels {
                 BakedModel original = models.get(key);
                 TextureAtlasSprite sprite = original == null ? null : flatSprite(original, state);
                 if (sprite == null) {
-                    String name = ForgeRegistries.BLOCKS.getKey(block).toString();
+                    String name = BuiltInRegistries.BLOCK.getKey(block).toString();
                     if (!kept.contains(name)) kept.add(name);
                     continue;
                 }
@@ -183,15 +182,14 @@ public final class Ladder3DModels {
                 Vector3f from = new Vector3f(e.from.x(), e.from.y(), mirroredCentre + (e.from.z() - 8) * thickness);
                 Vector3f to = new Vector3f(e.to.x(), e.to.y(), mirroredCentre + (e.to.z() - 8) * thickness);
                 e.faces.forEach((side, f) -> quads.computeIfAbsent(null, d -> new ArrayList<>()).add(BAKERY.bakeQuad(new Vector3f(from), new Vector3f(to),
-                        new BlockElementFace(null, -1, "#texture", f.uv), sprite, side, turnedRound, null, true, new ResourceLocation(LocalLadders.MODID, "ladder_3d"))));
+                        new BlockElementFace(null, -1, "#texture", f.uv()), sprite, side, turnedRound, null, true)));
             }
         }
 
         /** One face of the box from..to (north-facing model), textured with the given texture rectangle. */
         void face(Vector3f from, Vector3f to, Direction side, float u0, float v0, float u1, float v1, boolean againstWall) {
             BlockElementFace f = new BlockElementFace(null, -1, "#texture", new BlockFaceUV(new float[]{u0, v0, u1, v1}, 0));
-            BakedQuad q = BAKERY.bakeQuad(new Vector3f(from), new Vector3f(to), f, sprite, side, rotation, null, true,
-                    new ResourceLocation(LocalLadders.MODID, "ladder_3d"));
+            BakedQuad q = BAKERY.bakeQuad(new Vector3f(from), new Vector3f(to), f, sprite, side, rotation, null, true);
             // The back faces touch the wall: skipped like any face against a solid block (glass walls still show them).
             quads.computeIfAbsent(againstWall ? facing.getOpposite() : null, d -> new ArrayList<>()).add(q);
         }

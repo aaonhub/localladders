@@ -1,6 +1,6 @@
 # The Local Ladders
 
-Forge 1.20.1 mod (47.x) for The Local's server: ladders look like real 3D ladders, and you can extend a ladder
+NeoForge 1.21.1 mod (21.1.x) for The Local's server: ladders look like real 3D ladders, and you can extend a ladder
 column by right-clicking it with another ladder. Our own clean-room code, MIT licensed. Adds no blocks or items:
 take it out and every ladder in the world is still a normal ladder.
 
@@ -32,11 +32,11 @@ the end of that column, facing the same way. Which end:
 It goes past every ladder already in the column to the first free spot (air or water; water makes it waterlogged).
 The new ladder is placed exactly like a normal right-click on that spot: it needs a solid wall behind it (or, with
 Quark's Enhanced Ladders "Allow Freestanding" on, as on The Local, it may hang under the ladder above it, so you can
-extend down a shaft with no wall), uses one ladder outside creative, fires Forge's block place event (claim mods can
+extend down a shaft with no wall), uses one ladder outside creative, fires NeoForge's block place event (claim mods can
 stop it), and respects spawn protection and adventure mode. The spot must be within your normal reach + 1.5 blocks.
 If it can't be placed, nothing happens and nothing is used. Clicking the side of a ladder still works like vanilla
 (another ladder beside it on the wall). Create's metal ladders keep Create's own behaviour
-(`data/localladders/tags/blocks/not_extendable.json`).
+(`data/localladders/tags/block/not_extendable.json`).
 
 Quark's Enhanced Ladders also adds a ladder at the bottom when you right-click one; this mod handles the click first,
 so you get exactly one ladder, at the end you chose.
@@ -44,7 +44,7 @@ so you get exactly one ladder, at the end you chose.
 ## Building and testing
 
 ```
-tools/gradle-docker.sh build                # jar in build/libs (memory-capped container, host ~/.gradle + JDK 17)
+tools/gradle-docker.sh build                # jar in build/libs (memory-capped container, host ~/.gradle + JDK 21)
 tools/gradle-docker.sh runGameTestServer    # 17 GameTests: up, down, level look, top face, sneaking, end of column,
                                             # no wall, hanging (Quark only), creative, adventure, claim cancel,
                                             # too far, blocked, facing next to another wall, water, side face, other items
@@ -54,3 +54,7 @@ tools/fullpack-test.sh build/libs/*.jar     # the same scenarios inside The Loca
 
 `LadderScenarios` holds the scenarios (a fake player clicking through `ServerPlayerGameMode.useItemOn`, the real
 server path); `SelfTest` runs them in a full server and logs `[localladders-selftest] SUMMARY n/n passed`.
+
+The Forge 1.20.1 version is on `main`; this branch (`neoforge-1.21.1`) builds with NeoForge's ModDevGradle and official
+mappings, without decompiling Minecraft (`disableRecompilation`: Vineflower needs more memory than the build container
+has). `tools/fullpack-test.sh` still points at the 1.20.1 host kit.
